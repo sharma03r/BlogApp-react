@@ -1,20 +1,46 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect, useReducer } from "react";
+
+function blogReducer(state, action) {
+  switch (action.type) {
+    case "ADD":
+      return [action.blog, ...state];
+    case "DELETE":
+      return state.filter((blog, index) => index !== action.index);
+    default:
+      return [];
+  }
+}
 
 export default function Blog() {
   const [formData, setFormData] = useState({ title: "", content: "" });
-  const [blogs, setBlogs] = useState([]);
   const titleRef = useRef(null);
+  const [blogs, dispatch] = useReducer(blogReducer, []);
+
+  useEffect(() => {
+    titleRef.current.focus();
+  }, []);
+  useEffect(() => {
+    if (blogs.length && blogs[0].title.length) document.title = blogs[0].title;
+    else {
+      document.title = "No Blog!";
+    }
+  }, [blogs]);
 
   function handleSubmit(e) {
     e.preventDefault();
-    setBlogs([{ title: formData.title, content: formData.content }, ...blogs]);
+    //setBlogs([{ title: formData.title, content: formData.content }, ...blogs]);
+    dispatch({
+      type: "ADD",
+      blog: { title: formData.title, content: formData.content },
+    });
     setFormData({ title: "", content: "" });
     titleRef.current.focus();
     console.log(blogs);
   }
 
   function removeBlog(index) {
-    setBlogs(blogs.filter((blog, i) => index !== i));
+    // setBlogs(blogs.filter((blog, i) => index !== i));
+    dispatch({ type: "DELETE", index: index });
   }
 
   return (
@@ -44,6 +70,7 @@ export default function Blog() {
               onChange={(e) =>
                 setFormData({ content: e.target.value, title: formData.title })
               }
+              required
             />
           </Row>
           <button className="btn">Add</button>
