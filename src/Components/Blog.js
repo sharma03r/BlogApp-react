@@ -1,4 +1,6 @@
 import { useState, useRef, useEffect, useReducer } from "react";
+import { db } from "./firebaseInit";
+import { collection, addDoc } from "firebase/firestore";
 
 function blogReducer(state, action) {
   switch (action.type) {
@@ -26,13 +28,19 @@ export default function Blog() {
     }
   }, [blogs]);
 
-  function handleSubmit(e) {
+  async function handleSubmit(e) {
     e.preventDefault();
     //setBlogs([{ title: formData.title, content: formData.content }, ...blogs]);
     dispatch({
       type: "ADD",
       blog: { title: formData.title, content: formData.content },
     });
+
+    const docRef = await addDoc(collection(db, "blogs"), {
+      title: formData.title,
+      content: formData.content,
+    });
+
     setFormData({ title: "", content: "" });
     titleRef.current.focus();
     console.log(blogs);
