@@ -1,54 +1,66 @@
-import { useState, useRef, useEffect, useReducer } from "react";
+import { useState, useRef, useEffect } from "react";
 import { db } from "./firebaseInit";
-import { collection, addDoc } from "firebase/firestore";
-
-function blogReducer(state, action) {
-  switch (action.type) {
-    case "ADD":
-      return [action.blog, ...state];
-    case "DELETE":
-      return state.filter((blog, index) => index !== action.index);
-    default:
-      return [];
-  }
-}
+import {
+  doc,
+  collection,
+  addDoc,
+  getDocs,
+  onSnapshot,
+  deleteDoc,
+} from "firebase/firestore";
 
 export default function Blog() {
   const [formData, setFormData] = useState({ title: "", content: "" });
   const titleRef = useRef(null);
-  const [blogs, dispatch] = useReducer(blogReducer, []);
+  const [blogs, setBlogs] = useState([]);
 
   useEffect(() => {
     titleRef.current.focus();
   }, []);
   useEffect(() => {
-    if (blogs.length && blogs[0].title.length) document.title = blogs[0].title;
-    else {
-      document.title = "No Blog!";
-    }
-  }, [blogs]);
+    // async function fetchData() {
+    //   const snapshot = await getDocs(collection(db, "blogs"));
+    //   console.log(snapshot.docs);
+    //   const blogs = snapshot.docs.map((doc) => {
+    //     return {
+    //       id: doc.id,
+    //       ...doc.data(),
+    //     };
+    //   });
+    //   console.log(blogs);
+    //   setBlogs(blogs);
+    // }
+    // fetchData();
+    const unsub = onSnapshot(collection(db, "blogs"), (snapshot) => {
+      const blogs = snapshot.docs.map((doc) => {
+        return {
+          id: doc.id,
+          ...doc.data(),
+        };
+      });
+      console.log(blogs);
+      setBlogs(blogs);
+    });
+  }, []);
 
   async function handleSubmit(e) {
     e.preventDefault();
     //setBlogs([{ title: formData.title, content: formData.content }, ...blogs]);
-    dispatch({
-      type: "ADD",
-      blog: { title: formData.title, content: formData.content },
-    });
 
     const docRef = await addDoc(collection(db, "blogs"), {
       title: formData.title,
       content: formData.content,
     });
-
+    console.log(`Document created with id ${docRef.id}`);
     setFormData({ title: "", content: "" });
     titleRef.current.focus();
     console.log(blogs);
   }
 
-  function removeBlog(index) {
-    // setBlogs(blogs.filter((blog, i) => index !== i));
-    dispatch({ type: "DELETE", index: index });
+  async function removeBlog(id) {
+    //setBlogs(blogs.filter((blog, i) => index !== i));
+    const docRef = doc(db, "blogs", id);
+    await deleteDoc(docRef);
   }
 
   return (
@@ -91,7 +103,7 @@ export default function Blog() {
           <h3>{blog.title}</h3>
           <p>{blog.content}</p>
           <div className="blog-btn">
-            <button className="btn remove" onClick={() => removeBlog(index)}>
+            <button className="btn remove" onClick={() => removeBlog(blog.id)}>
               Delete
             </button>
           </div>
