@@ -65,7 +65,7 @@ export default function Blog() {
           <Row label="Content">
             <textarea
               className="input content"
-              placeholder="Content goes here.."
+              placeholder="Content goes here..."
               value={formData.content}
               onChange={(e) =>
                 setFormData({ content: e.target.value, title: formData.title })
